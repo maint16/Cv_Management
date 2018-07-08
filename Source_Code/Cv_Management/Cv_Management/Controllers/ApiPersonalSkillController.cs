@@ -13,22 +13,49 @@ namespace Cv_Management.Controllers
     [RoutePrefix("api/personalSkill")]
     public class ApiPersonalSkillController : ApiController
     {
+        #region Properties
+
         public readonly DbCvManagementContext DbSet;
+
+        #endregion
+
+        #region Contructors
 
         public ApiPersonalSkillController()
         {
             DbSet = new DbCvManagementContext();
         }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Get Personal skill using specific conditions
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("")]
         public IHttpActionResult Search([FromBody]SearchPersonalSkillViewModel model)
         {
             model = model ?? new SearchPersonalSkillViewModel();
             var personalSkills = DbSet.PersonalSkills.AsQueryable();
-            if (model.SkillCategoryId > 0)
-                personalSkills = personalSkills.Where(c => c.SkillCategoryId == model.SkillCategoryId);
-            if (model.SkillId > 0)
-                personalSkills = personalSkills.Where(c => c.SkillId == model.SkillId);
+
+
+            if (model.SkillCategoryIds != null)
+            {
+                var skillCategoryIds = model.SkillCategoryIds.Where(x => x > 0).ToList();
+                if (skillCategoryIds.Count > 0)
+                    personalSkills = personalSkills.Where(x => skillCategoryIds.Contains(x.SkillCategoryId));
+            }
+
+            if (model.SkillIds != null)
+            {
+                var skillIds = model.SkillIds.Where(x => x > 0).ToList();
+                if (skillIds.Count > 0)
+                    personalSkills = personalSkills.Where(x => skillIds.Contains(x.SkillId));
+            }
             if (model.Point > 0)
                 personalSkills = personalSkills.Where(c => c.Point == model.Point);
 
@@ -43,6 +70,12 @@ namespace Cv_Management.Controllers
 
         }
 
+
+        /// <summary>
+        /// Create personal skill
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("")]
         public IHttpActionResult Create([FromBody]CreatePersonalSkillViewModel model)
@@ -65,6 +98,12 @@ namespace Cv_Management.Controllers
 
         }
 
+
+        /// <summary>
+        /// Update personal skill
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut]
         [Route("")]
         public IHttpActionResult Update([FromBody]UpdatePersonalSkillViewModel model)
@@ -85,6 +124,12 @@ namespace Cv_Management.Controllers
 
         }
 
+        /// <summary>
+        /// Delete personal skill
+        /// </summary>
+        /// <param name="skillId"></param>
+        /// <param name="skillCategoryId"></param>
+        /// <returns></returns>
         [HttpDelete]
         [Route("")]
         public IHttpActionResult Delete([FromUri] int skillId, [FromUri] int skillCategoryId)
@@ -97,5 +142,8 @@ namespace Cv_Management.Controllers
             return Ok();
 
         }
+
+        #endregion
+
     }
 }

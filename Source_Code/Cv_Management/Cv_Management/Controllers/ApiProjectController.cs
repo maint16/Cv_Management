@@ -12,20 +12,43 @@ namespace Cv_Management.Controllers
     [RoutePrefix("api/projet")]
     public class ApiProjectController : ApiController
     {
+
+        #region Properties
+
         public readonly DbCvManagementContext DbSet;
+
+        #endregion
+
+        #region Contructors
 
         public ApiProjectController()
         {
             DbSet = new DbCvManagementContext();
         }
+
+        #endregion
+
+        #region Project
+
+
+        /// <summary>
+        /// Get projects using specific conditions
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("")]
         public IHttpActionResult Search([FromBody]SearchProjectViewModel model)
         {
             model = model ?? new SearchProjectViewModel();
             var Projects = DbSet.Projects.AsQueryable();
-            if (model.Id > 0)
-                Projects = Projects.Where(c => c.Id == model.Id);
+            if (model.Ids != null)
+            {
+                var ids = model.Ids.Where(x => x > 0).ToList();
+                if (ids.Count > 0)
+                    Projects = Projects.Where(x => ids.Contains(x.Id));
+
+            }
             if (!string.IsNullOrEmpty(model.Name))
                 Projects = Projects.Where(c => c.Name.Contains(model.Name));
 
@@ -42,6 +65,11 @@ namespace Cv_Management.Controllers
 
         }
 
+        /// <summary>
+        /// Create Project
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("")]
         public IHttpActionResult Create([FromBody]CreateProjectViewModel model)
@@ -64,6 +92,13 @@ namespace Cv_Management.Controllers
             return Ok(project);
 
         }
+
+        /// <summary>
+        /// Update Project
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
         public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateProjectViewModel model)
@@ -88,6 +123,12 @@ namespace Cv_Management.Controllers
             return Ok(project);
 
         }
+
+        /// <summary>
+        /// Delete project using Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
         public IHttpActionResult Delete([FromUri]int id)
@@ -99,5 +140,8 @@ namespace Cv_Management.Controllers
             return Ok();
 
         }
+
+        #endregion
+
     }
 }

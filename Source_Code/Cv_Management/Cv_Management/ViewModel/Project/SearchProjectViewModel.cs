@@ -7,7 +7,7 @@ namespace Cv_Management.ViewModel.Project
 {
     public class SearchProjectViewModel
     {
-        public int Id { get; set; }
+        public HashSet<int> Ids { get; set; }
         public int UserId { get; set; }
         public string Name { get; set; }
        

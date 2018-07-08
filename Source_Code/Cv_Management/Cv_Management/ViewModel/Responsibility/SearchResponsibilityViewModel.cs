@@ -8,7 +8,7 @@ namespace Cv_Management.ViewModel.Responsibility
 {
     public class SearchResponsibilityViewModel
     {
-        public int Id { get; set; }
+        public HashSet<int> Ids { get; set; }
         public string Name { get; set; }
     }
 }

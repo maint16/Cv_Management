@@ -9,7 +9,7 @@ namespace Cv_Management.ViewModel.SkillCategory
     public class SearchSkillCategoryViewModel
     {
 
-        public int Id { get; set; }
+        public HashSet<int> Ids { get; set; }
         public int UserId { get; set; }
         
         public string Name { get; set; }

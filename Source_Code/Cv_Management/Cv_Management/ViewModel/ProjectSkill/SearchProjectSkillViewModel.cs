@@ -8,8 +8,8 @@ namespace Cv_Management.ViewModel.ProjectSkill
 {
     public class SearchProjectSkillViewModel
     {
-        public int ProjectId { get; set; }
+        public HashSet<int> ProjectIds { get; set; }
 
-        public int SkillId { get; set; }
+        public HashSet<int> SkillIds { get; set; }
     }
 }

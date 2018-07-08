@@ -9,9 +9,9 @@ namespace Cv_Management.ViewModel.PersonalSkill
     public class SearchPersonalSkillViewModel
     {
       
-        public int SkillCategoryId { get; set; }
+        public HashSet<int> SkillCategoryIds { get; set; }
     
-        public int SkillId { get; set; }
+        public HashSet<int> SkillIds { get; set; }
    
         public int Point { get; set; }
        

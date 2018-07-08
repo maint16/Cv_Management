@@ -14,34 +14,64 @@ namespace Cv_Management.Controllers
     [RoutePrefix("api/projectResponsibility")]
     public class ApiProjectResponsibilityController : ApiController
     {
+        #region properties
+
         public readonly DbCvManagementContext DbSet;
+
+        #endregion
+
+        #region Contructors
 
         public ApiProjectResponsibilityController()
         {
-            DbSet= new DbCvManagementContext(); 
+            DbSet = new DbCvManagementContext();
         }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Get project responsibility using specific conditions
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("")]
         public IHttpActionResult Search([FromBody]SearchProjectResponsibilityViewModel model)
         {
             model = model ?? new SearchProjectResponsibilityViewModel();
             var projectResponsibilitys = DbSet.ProjectResponsibilities.AsQueryable();
-            if (model.ProjectId > 0)
-                projectResponsibilitys = projectResponsibilitys.Where(c => c.ProjectId == model.ProjectId);
-            if (model.ResponsibilityId > 0)
-                projectResponsibilitys = projectResponsibilitys.Where(c => c.RespinsibilityId == model.ResponsibilityId);
+            if (model.ProjectIds != null)
+            {
+                var projectIds = model.ProjectIds.Where(x => x > 0).ToList();
+                if (projectIds.Count > 0)
+                    projectResponsibilitys = projectResponsibilitys.Where(x => projectIds.Contains(x.ProjectId));
 
+            }
+            if (model.ResponsibilityIds != null)
+            {
+                var responsibilityIds = model.ResponsibilityIds.Where(x => x > 0).ToList();
+                if (responsibilityIds.Count > 0)
+                    projectResponsibilitys = projectResponsibilitys.Where(x => responsibilityIds.Contains(x.RespinsibilityId));
+
+            }
             var result = projectResponsibilitys.Select(c => new ReadingProjectResponsibilityViewModel()
             {
                 ProjectId = c.ProjectId,
                 ResponsibilityId = c.RespinsibilityId,
                 CreatedTime = c.CreatedTime
-               
+
             }).ToList();
             return Ok(result);
 
         }
-        
+
+        /// <summary>
+        /// Create project responsibility
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("")]
         public IHttpActionResult Create([FromBody]CreateProjectResponsibilityViewModel model)
@@ -62,7 +92,13 @@ namespace Cv_Management.Controllers
             return Ok(projectResponsibility);
 
         }
-       
+
+        /// <summary>
+        /// Delete project responsibility
+        /// </summary>
+        /// <param name="responsibilityId"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
         [HttpDelete]
         [Route("")]
         public IHttpActionResult Delete([FromUri] int responsibilityId, [FromUri] int projectId)
@@ -75,5 +111,8 @@ namespace Cv_Management.Controllers
             return Ok();
 
         }
+
+        #endregion
+
     }
 }

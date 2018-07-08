@@ -9,8 +9,8 @@ namespace Cv_Management.ViewModel.ProjectResponsibility
     public class SearchProjectResponsibilityViewModel
     {
     
-        public int ProjectId { get; set; }
+        public HashSet<int> ProjectIds { get; set; }
      
-        public int ResponsibilityId { get; set; }
+        public HashSet<int> ResponsibilityIds { get; set; }
     }
 }

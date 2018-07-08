@@ -9,7 +9,7 @@ namespace Cv_Management.ViewModel.User
     public class SearchUserViewModel
     {
 
-        public int Id { get; set; }
+        public HashSet<int> Ids { get; set; }
         public string FirstName { get; set; }
 
         public string LastName { get; set; }

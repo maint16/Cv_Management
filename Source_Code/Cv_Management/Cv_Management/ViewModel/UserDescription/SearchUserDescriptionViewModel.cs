@@ -7,7 +7,7 @@ namespace Cv_Management.ViewModel.UserDescription
 {
     public class SearchUserDescriptionViewModel
     {
-        public int Id { get; set; }
+        public HashSet<int> Ids { get; set; }
         public int UserId { get; set; }
         public string Description { get; set; }
     }

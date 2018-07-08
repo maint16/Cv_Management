@@ -12,12 +12,29 @@ namespace Cv_Management.Controllers
     [RoutePrefix("api/responsibility")]
     public class ApiResponsibilityController : ApiController
     {
+
+        #region Properties 
+
         public readonly DbCvManagementContext DbSet;
+
+        #endregion
+
+        #region Contructors
 
         public ApiResponsibilityController()
         {
-            DbSet= new DbCvManagementContext(); 
+            DbSet = new DbCvManagementContext();
         }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Get Responsibilities using specific conditions
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("")]
         public IHttpActionResult Search([FromBody]SearchResponsibilityViewModel model)
@@ -38,7 +55,12 @@ namespace Cv_Management.Controllers
             return Ok(result);
 
         }
-        
+
+        /// <summary>
+        /// Create responsibility
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("")]
         public IHttpActionResult Create([FromBody]CreateResponsibilityViewModel model)
@@ -58,6 +80,13 @@ namespace Cv_Management.Controllers
             return Ok(responsibility);
 
         }
+
+        /// <summary>
+        /// Update responsibility
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
         public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateResponsibilityViewModel model)
@@ -79,6 +108,12 @@ namespace Cv_Management.Controllers
             return Ok(responsibility);
 
         }
+
+        /// <summary>
+        /// Delete responsibility
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
         public IHttpActionResult Delete([FromUri]int id)
@@ -90,5 +125,8 @@ namespace Cv_Management.Controllers
             return Ok();
 
         }
+
+        #endregion
+
     }
 }
