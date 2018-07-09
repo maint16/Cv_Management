@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.Project;
 
 namespace Cv_Management.Controllers
@@ -38,29 +41,30 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchProjectViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchProjectViewModel model)
         {
             model = model ?? new SearchProjectViewModel();
-            var Projects = DbSet.Projects.AsQueryable();
+            var projects = DbSet.Projects.AsQueryable();
             if (model.Ids != null)
             {
                 var ids = model.Ids.Where(x => x > 0).ToList();
                 if (ids.Count > 0)
-                    Projects = Projects.Where(x => ids.Contains(x.Id));
+                    projects = projects.Where(x => ids.Contains(x.Id));
 
             }
             if (!string.IsNullOrEmpty(model.Name))
-                Projects = Projects.Where(c => c.Name.Contains(model.Name));
-
-            var result = Projects.Select(c => new ReadingProjectViewModel()
+                projects = projects.Where(c => c.Name.Contains(model.Name));
+            var result = new SearchResultViewModel<IList<Project>>();
+            result.Total = await projects.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                Name = c.Name,
-                UserId = c.UserId,
-                Id = c.Id,
-                StatedTime = c.StatedTime,
-                FinishedTime = c.FinishedTime,
-                Description = c.Description
-            }).ToList();
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                projects = projects.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await projects.ToListAsync();
             return Ok(result);
 
         }
@@ -72,7 +76,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateProjectViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreateProjectViewModel model)
         {
             if (model == null)
             {
@@ -88,7 +92,7 @@ namespace Cv_Management.Controllers
             project.FinishedTime = model.FinishedTime;
             project.StatedTime = model.StatedTime;
             project = DbSet.Projects.Add(project);
-            DbSet.SaveChanges();
+           await DbSet.SaveChangesAsync();
             return Ok(project);
 
         }
@@ -101,7 +105,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateProjectViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateProjectViewModel model)
         {
             if (model == null)
             {
@@ -119,7 +123,7 @@ namespace Cv_Management.Controllers
             project.Description = model.Description;
             project.FinishedTime = model.FinishedTime;
             project.StatedTime = model.StatedTime;
-            DbSet.SaveChanges();
+           await  DbSet.SaveChangesAsync();
             return Ok(project);
 
         }
@@ -131,12 +135,13 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public IHttpActionResult Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri]int id)
         {
             var project = DbSet.Projects.Find(id);
             if (project == null)
                 return NotFound();
             DbSet.Projects.Remove(project);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

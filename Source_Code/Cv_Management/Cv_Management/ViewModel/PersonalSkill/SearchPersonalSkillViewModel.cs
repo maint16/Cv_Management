@@ -6,7 +6,7 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.PersonalSkill
 {
-    public class SearchPersonalSkillViewModel
+    public class SearchPersonalSkillViewModel : BaseSearchViewModel
     {
       
         public HashSet<int> SkillCategoryIds { get; set; }

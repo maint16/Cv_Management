@@ -6,11 +6,13 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.ProjectResponsibility
 {
-    public class SearchProjectResponsibilityViewModel
+    public class SearchProjectResponsibilityViewModel:BaseSearchViewModel
     {
     
         public HashSet<int> ProjectIds { get; set; }
      
         public HashSet<int> ResponsibilityIds { get; set; }
+
+     
     }
 }

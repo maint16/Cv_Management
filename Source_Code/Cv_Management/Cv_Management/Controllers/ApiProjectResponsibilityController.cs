@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.Project;
 using Cv_Management.ViewModel.ProjectResponsibility;
 using Cv_Management.ViewModel.Responsibility;
@@ -38,31 +41,38 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchProjectResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchProjectResponsibilityViewModel model)
         {
             model = model ?? new SearchProjectResponsibilityViewModel();
-            var projectResponsibilitys = DbSet.ProjectResponsibilities.AsQueryable();
+            var projectResponsibilities = DbSet.ProjectResponsibilities.AsQueryable();
             if (model.ProjectIds != null)
             {
                 var projectIds = model.ProjectIds.Where(x => x > 0).ToList();
                 if (projectIds.Count > 0)
-                    projectResponsibilitys = projectResponsibilitys.Where(x => projectIds.Contains(x.ProjectId));
+                    projectResponsibilities = projectResponsibilities.Where(x => projectIds.Contains(x.ProjectId));
 
             }
             if (model.ResponsibilityIds != null)
             {
                 var responsibilityIds = model.ResponsibilityIds.Where(x => x > 0).ToList();
                 if (responsibilityIds.Count > 0)
-                    projectResponsibilitys = projectResponsibilitys.Where(x => responsibilityIds.Contains(x.RespinsibilityId));
+                    projectResponsibilities = projectResponsibilities.Where(x => responsibilityIds.Contains(x.RespinsibilityId));
 
             }
-            var result = projectResponsibilitys.Select(c => new ReadingProjectResponsibilityViewModel()
-            {
-                ProjectId = c.ProjectId,
-                ResponsibilityId = c.RespinsibilityId,
-                CreatedTime = c.CreatedTime
 
-            }).ToList();
+            var result = new SearchResultViewModel<IList<ProjectResponsibility>>();
+            result.Total = await projectResponsibilities.CountAsync();
+
+            var pagination = model.Pagination;
+            if (pagination != null)
+            {
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+
+                projectResponsibilities = projectResponsibilities.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await projectResponsibilities.ToListAsync();
             return Ok(result);
 
         }
@@ -74,7 +84,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateProjectResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreateProjectResponsibilityViewModel model)
         {
             if (model == null)
             {
@@ -88,7 +98,7 @@ namespace Cv_Management.Controllers
             projectResponsibility.RespinsibilityId = model.ResponsibilityId;
             projectResponsibility.CreatedTime = DateTime.Now.ToOADate();
             projectResponsibility = DbSet.ProjectResponsibilities.Add(projectResponsibility);
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(projectResponsibility);
 
         }
@@ -101,13 +111,14 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("")]
-        public IHttpActionResult Delete([FromUri] int responsibilityId, [FromUri] int projectId)
+        public async Task<IHttpActionResult> Delete([FromUri] int responsibilityId, [FromUri] int projectId)
         {
             var projectResponsibility = DbSet.ProjectResponsibilities.FirstOrDefault(c => c.RespinsibilityId == responsibilityId && c.ProjectId == projectId);
 
             if (projectResponsibility == null)
                 return NotFound();
             DbSet.ProjectResponsibilities.Remove(projectResponsibility);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

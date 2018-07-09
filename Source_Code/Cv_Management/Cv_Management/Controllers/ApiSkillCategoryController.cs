@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.SkillCategory;
 
 namespace Cv_Management.Controllers
@@ -36,29 +39,33 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchSkillCategoryViewModel model)
         {
             model = model ?? new SearchSkillCategoryViewModel();
-            var skillCategorys = DbSet.SkillCategories.AsQueryable();
+            var skillCategories = DbSet.SkillCategories.AsQueryable();
             if (model.Ids != null)
             {
                 var ids = model.Ids.Where(x => x > 0).ToList();
                 if (ids.Count > 0)
-                    skillCategorys = skillCategorys.Where(x => ids.Contains(x.Id));
+                    skillCategories = skillCategories.Where(x => ids.Contains(x.Id));
 
             }
 
             if (model.UserId > 0)
-                skillCategorys = skillCategorys.Where(c => c.UserId == model.UserId);
+                skillCategories = skillCategories.Where(c => c.UserId == model.UserId);
             if (!string.IsNullOrEmpty(model.Name))
-                skillCategorys = skillCategorys.Where(c => c.Name.Contains(model.Name));
-            var result = skillCategorys.Select(c => new ReadingSkillCategoryViewModel()
+                skillCategories = skillCategories.Where(c => c.Name.Contains(model.Name));
+            var result = new SearchResultViewModel<IList<SkillCategory>>();
+            result.Total = await skillCategories.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                Name = c.Name,
-                CreatedTime = c.CreatedTime,
-                Id = c.Id,
-                UserId = c.UserId
-            }).ToList();
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                skillCategories = skillCategories.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await skillCategories.ToListAsync();
             return Ok(result);
 
         }
@@ -70,7 +77,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreateSkillCategoryViewModel model)
         {
             if (model == null)
             {
@@ -86,7 +93,7 @@ namespace Cv_Management.Controllers
                 skillCategory.Photo = Convert.ToBase64String(model.Photo.Buffer);
             skillCategory.CreatedTime = DateTime.Now.ToOADate();
             skillCategory = DbSet.SkillCategories.Add(skillCategory);
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(skillCategory);
 
         }
@@ -99,7 +106,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateSkillCategoryViewModel model)
         {
             if (model == null)
             {
@@ -116,7 +123,7 @@ namespace Cv_Management.Controllers
             skillCategory.UserId = model.UserId;
             if (model.Photo != null)
                 skillCategory.Photo = Convert.ToBase64String(model.Photo.Buffer);
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(skillCategory);
 
         }
@@ -128,12 +135,13 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public IHttpActionResult Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri]int id)
         {
             var skillCategory = DbSet.SkillCategories.Find(id);
             if (skillCategory == null)
                 return NotFound();
             DbSet.SkillCategories.Remove(skillCategory);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

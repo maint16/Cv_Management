@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.PersonalSkill;
 using Cv_Management.ViewModel.Skill;
 
@@ -37,7 +40,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchPersonalSkillViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchPersonalSkillViewModel model)
         {
             model = model ?? new SearchPersonalSkillViewModel();
             var personalSkills = DbSet.PersonalSkills.AsQueryable();
@@ -58,14 +61,17 @@ namespace Cv_Management.Controllers
             }
             if (model.Point > 0)
                 personalSkills = personalSkills.Where(c => c.Point == model.Point);
-
-            var result = personalSkills.Select(c => new ReadingPersonalSkillViewModel()
+            var result = new SearchResultViewModel<IList<PersonalSkill>>();
+            result.Total = await personalSkills.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                SkillCategoryId = c.SkillCategoryId,
-                SkillId = c.SkillId,
-                Point = c.Point,
-                CreatedTime = c.CreatedTime
-            }).ToList();
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                personalSkills = personalSkills.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await personalSkills.ToListAsync();
             return Ok(result);
 
         }
@@ -78,7 +84,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreatePersonalSkillViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreatePersonalSkillViewModel model)
         {
             if (model == null)
             {
@@ -93,7 +99,7 @@ namespace Cv_Management.Controllers
             personalSkill.Point = model.Point;
             personalSkill.CreatedTime = DateTime.Now.ToOADate();
             personalSkill = DbSet.PersonalSkills.Add(personalSkill);
-            DbSet.SaveChanges();
+           await DbSet.SaveChangesAsync();
             return Ok(personalSkill);
 
         }
@@ -106,7 +112,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("")]
-        public IHttpActionResult Update([FromBody]UpdatePersonalSkillViewModel model)
+        public async Task<IHttpActionResult> Update([FromBody]UpdatePersonalSkillViewModel model)
         {
             if (model == null)
             {
@@ -119,7 +125,7 @@ namespace Cv_Management.Controllers
             if (personalSkill == null)
                 return NotFound();
             personalSkill.Point = model.Point;
-            DbSet.SaveChanges();
+           await DbSet.SaveChangesAsync();
             return Ok(personalSkill);
 
         }
@@ -132,13 +138,14 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("")]
-        public IHttpActionResult Delete([FromUri] int skillId, [FromUri] int skillCategoryId)
+        public async Task<IHttpActionResult> Delete([FromUri] int skillId, [FromUri] int skillCategoryId)
         {
             var personalSkill = DbSet.PersonalSkills.FirstOrDefault(c => c.SkillId == skillId && c.SkillCategoryId == skillCategoryId);
 
             if (personalSkill == null)
                 return NotFound();
             DbSet.PersonalSkills.Remove(personalSkill);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

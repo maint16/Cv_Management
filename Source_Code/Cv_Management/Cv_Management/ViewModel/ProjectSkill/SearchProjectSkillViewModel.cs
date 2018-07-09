@@ -6,7 +6,7 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.ProjectSkill
 {
-    public class SearchProjectSkillViewModel
+    public class SearchProjectSkillViewModel:BaseSearchViewModel
     {
         public HashSet<int> ProjectIds { get; set; }
 

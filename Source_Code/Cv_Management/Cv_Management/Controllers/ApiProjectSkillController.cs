@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.Project;
 using Cv_Management.ViewModel.ProjectSkill;
 using Cv_Management.ViewModel.Skill;
@@ -38,7 +41,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchProjectSkillViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchProjectSkillViewModel model)
         {
             model = model ?? new SearchProjectSkillViewModel();
             var projectSkills = DbSet.ProjectSkills.AsQueryable();
@@ -56,29 +59,17 @@ namespace Cv_Management.Controllers
                     projectSkills = projectSkills.Where(x => skillIds.Contains(x.SkillId));
 
             }
-
-            var result = projectSkills.Select(c => new ReadingProjectSkillViewModel()
+            var result = new SearchResultViewModel<IList<ProjectSkill>>();
+            result.Total = await projectSkills.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                ProjectId = c.ProjectId,
-                project = new ReadingProjectViewModel()
-                {
-                    Id = c.Project.Id,
-                    Name = c.Project.Name,
-                    UserId = c.Project.UserId,
-                    Description = c.Project.Description,
-                    FinishedTime = c.Project.FinishedTime,
-                    StatedTime = c.Project.StatedTime
-
-                },
-                SkillId = c.SkillId,
-                skill = new ReadingSkillViewModel()
-                {
-                    Id = c.Skill.Id,
-                    Name = c.Skill.Name,
-                    CreatedTime = c.Skill.CreatedTime,
-                    LastModifiedTime = c.Skill.LastModifiedTime
-                }
-            }).ToList();
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                projectSkills = projectSkills.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await projectSkills.ToListAsync();
             return Ok(result);
 
         }
@@ -90,7 +81,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateProjectSkillViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreateProjectSkillViewModel model)
         {
             if (model == null)
             {
@@ -103,7 +94,7 @@ namespace Cv_Management.Controllers
             projectSkill.ProjectId = model.ProjectId;
             projectSkill.SkillId = model.SkillId;
             projectSkill = DbSet.ProjectSkills.Add(projectSkill);
-            DbSet.SaveChanges();
+           await  DbSet.SaveChangesAsync();
             return Ok(projectSkill);
 
         }
@@ -116,13 +107,14 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("")]
-        public IHttpActionResult Delete([FromUri] int skillId, [FromUri] int projectId)
+        public async Task<IHttpActionResult> Delete([FromUri] int skillId, [FromUri] int projectId)
         {
             var projectSkill = DbSet.ProjectSkills.FirstOrDefault(c => c.SkillId == skillId && c.ProjectId == projectId);
 
             if (projectSkill == null)
                 return NotFound();
             DbSet.ProjectSkills.Remove(projectSkill);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

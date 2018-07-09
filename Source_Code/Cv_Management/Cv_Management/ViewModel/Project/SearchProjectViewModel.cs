@@ -5,7 +5,7 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.Project
 {
-    public class SearchProjectViewModel
+    public class SearchProjectViewModel : BaseSearchViewModel
     {
         public HashSet<int> Ids { get; set; }
         public int UserId { get; set; }

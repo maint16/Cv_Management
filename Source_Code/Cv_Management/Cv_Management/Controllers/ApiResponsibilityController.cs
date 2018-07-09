@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.Responsibility;
 
 namespace Cv_Management.Controllers
@@ -37,21 +40,30 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchResponsibilityViewModel model)
         {
             model = model ?? new SearchResponsibilityViewModel();
-            var responsibilitys = DbSet.Responsibilities.AsQueryable();
-            if (model.Id > 0)
-                responsibilitys = responsibilitys.Where(c => c.Id == model.Id);
-            if (!string.IsNullOrEmpty(model.Name))
-                responsibilitys = responsibilitys.Where(c => c.Name.Contains(model.Name));
-            var result = responsibilitys.Select(c => new ReadingResponsibilityViewModel()
+            var responsibilities = DbSet.Responsibilities.AsQueryable();
+            if (model.Ids != null)
             {
-                Name = c.Name,
-                CreatedTime = c.CreatedTime,
-                Id = c.Id,
-                LastModifiedTime = c.LastModifiedTime
-            }).ToList();
+                var ids = model.Ids.Where(x => x > 0).ToList();
+                if (ids.Count > 0)
+                    responsibilities = responsibilities.Where(x => ids.Contains(x.Id));
+
+            }
+            if (!string.IsNullOrEmpty(model.Name))
+                responsibilities = responsibilities.Where(c => c.Name.Contains(model.Name));
+            var result = new SearchResultViewModel<IList<Responsibility>>();
+            result.Total = await responsibilities.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
+            {
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                responsibilities = responsibilities.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            result.Records = await responsibilities.ToListAsync();
             return Ok(result);
 
         }
@@ -63,7 +75,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody]CreateResponsibilityViewModel model)
         {
             if (model == null)
             {
@@ -76,7 +88,7 @@ namespace Cv_Management.Controllers
             responsibility.Name = model.Name;
             responsibility.CreatedTime = DateTime.Now.ToOADate();
             responsibility = DbSet.Responsibilities.Add(responsibility);
-            DbSet.SaveChanges();
+           await  DbSet.SaveChangesAsync();
             return Ok(responsibility);
 
         }
@@ -89,7 +101,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateResponsibilityViewModel model)
         {
             if (model == null)
             {
@@ -104,7 +116,7 @@ namespace Cv_Management.Controllers
                 return NotFound();
             responsibility.Name = model.Name;
             responsibility.LastModifiedTime = DateTime.Now.ToOADate();
-            DbSet.SaveChanges();
+          await  DbSet.SaveChangesAsync();
             return Ok(responsibility);
 
         }
@@ -116,12 +128,13 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public IHttpActionResult Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri]int id)
         {
             var responsibility = DbSet.Responsibilities.Find(id);
             if (responsibility == null)
                 return NotFound();
             DbSet.Responsibilities.Remove(responsibility);
+            await DbSet.SaveChangesAsync();
             return Ok();
 
         }

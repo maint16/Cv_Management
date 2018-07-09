@@ -6,7 +6,7 @@ using ApiMultiPartFormData.Models;
 
 namespace Cv_Management.ViewModel.SkillCategory
 {
-    public class SearchSkillCategoryViewModel
+    public class SearchSkillCategoryViewModel: BaseSearchViewModel
     {
 
         public HashSet<int> Ids { get; set; }

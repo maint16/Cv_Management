@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.User;
 using Cv_Management.ViewModel.UserDescription;
 
@@ -34,7 +37,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult Search([FromBody]SearchUserDescriptionViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody]SearchUserDescriptionViewModel model)
         {
             model = model ?? new SearchUserDescriptionViewModel();
             var userDescriptions = DbSet.UserDescriptions.AsQueryable();
@@ -49,22 +52,18 @@ namespace Cv_Management.Controllers
                 userDescriptions = userDescriptions.Where(c => c.UserId == model.UserId);
             if (!string.IsNullOrEmpty(model.Description))
                 userDescriptions = userDescriptions.Where(c => c.Description.Contains(model.Description));
-            var result = userDescriptions.Select(c => new ReadingUserDescriptionViewModel()
+            var results = new SearchResultViewModel<IList<UserDescription>>();
+            results.Total = await userDescriptions.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                Id = c.Id,
-                UserId = c.UserId,
-                User = new ReadingUserViewModel()
-                {
-                    Id = c.User.Id,
-                    FirstName = c.User.FirstName,
-                    LastName = c.User.LastName,
-                    Birthday = c.User.Birthday,
-                    Role = c.User.Role
-                },
-                Description = c.Description
-
-            }).ToList();
-            return Ok(result);
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                userDescriptions = userDescriptions.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            results.Records = await userDescriptions.ToListAsync();
+            return Ok(results);
 
         }
         /// <summary>
@@ -74,7 +73,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody]CreateUserDescriptionViewModel model)
+        public async  Task<IHttpActionResult> Create([FromBody]CreateUserDescriptionViewModel model)
         {
             if (model == null)
             {
@@ -87,7 +86,7 @@ namespace Cv_Management.Controllers
             userDescription.UserId = model.UserId;
             userDescription.Description = model.Description;
             userDescription = DbSet.UserDescriptions.Add(userDescription);
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(userDescription);
 
         }
@@ -99,7 +98,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public IHttpActionResult Update([FromUri] int id, [FromBody]UpdateUserDescriptionViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateUserDescriptionViewModel model)
         {
             if (model == null)
             {
@@ -114,7 +113,7 @@ namespace Cv_Management.Controllers
                 return NotFound();
             userDescription.UserId = model.UserId;
             userDescription.Description = model.Description;
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(userDescription);
 
         }
@@ -125,13 +124,13 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public IHttpActionResult Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri]int id)
         {
             var userDescription = DbSet.UserDescriptions.Find(id);
             if (userDescription == null)
                 return NotFound();
             DbSet.UserDescriptions.Remove(userDescription);
-            DbSet.UserDescriptions.Remove(userDescription);
+           await DbSet.SaveChangesAsync();
             return Ok();
 
         }

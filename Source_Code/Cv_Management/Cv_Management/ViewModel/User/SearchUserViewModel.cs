@@ -6,7 +6,7 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.User
 {
-    public class SearchUserViewModel
+    public class SearchUserViewModel:BaseSearchViewModel
     {
 
         public HashSet<int> Ids { get; set; }

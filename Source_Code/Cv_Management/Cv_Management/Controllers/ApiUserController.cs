@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
 using Cv_Management.Entities;
 using Cv_Management.Entities.Context;
+using Cv_Management.ViewModel;
 using Cv_Management.ViewModel.User;
 
 namespace Cv_Management.Controllers
@@ -36,7 +39,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public IHttpActionResult GellAll([FromBody] SearchUserViewModel model)
+        public async Task<IHttpActionResult> GellAll([FromBody] SearchUserViewModel model)
         {
             var result = new List<ReadingUserViewModel>();
             var users = DbSet.Users.AsQueryable();
@@ -48,7 +51,7 @@ namespace Cv_Management.Controllers
                     users = users.Where(x => ids.Contains(x.Id));
 
             }
-           
+
             if (!string.IsNullOrEmpty(model.FirstName))
                 users = users.Where(c => c.LastName.Contains(model.LastName));
 
@@ -57,16 +60,17 @@ namespace Cv_Management.Controllers
 
             if (!string.IsNullOrEmpty(model.Role))
                 users = users.Where(c => c.Role == model.Role);
-
-            result = users.Select(c => new ReadingUserViewModel()
+            var results = new SearchResultViewModel<IList<User>>();
+            results.Total = await users.CountAsync();
+            var pagination = model.Pagination;
+            if (pagination != null)
             {
-                Id = c.Id,
-                Birthday = c.Birthday,
-                FirstName = c.FirstName,
-                LastName = c.LastName,
-                Photo = c.Photo,
-                Role = c.Role
-            }).ToList();
+                if (pagination.Page < 1)
+                    pagination.Page = 1;
+                users = users.Skip((pagination.Page - 1) * pagination.Records)
+                    .Take(pagination.Records);
+            }
+            results.Records = await users.ToListAsync();
             return Ok(result);
         }
         /// <summary>
@@ -76,7 +80,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public IHttpActionResult Create([FromBody] CreateUserViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody] CreateUserViewModel model)
         {
             if (model == null)
             {
@@ -91,7 +95,7 @@ namespace Cv_Management.Controllers
             MappingData(userEnt, model);
 
             userEnt = DbSet.Users.Add(userEnt);
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(new ReadingUserViewModel(userEnt));
         }
         /// <summary>
@@ -102,7 +106,7 @@ namespace Cv_Management.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public IHttpActionResult Update([FromUri] int id, [FromBody] UpdateUserViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateUserViewModel model)
         {
             var user = DbSet.Users.Find(id);
             if (user == null)
@@ -116,7 +120,7 @@ namespace Cv_Management.Controllers
                 return BadRequest(ModelState);
             MappingDataForUpdate(user, model);
 
-            DbSet.SaveChanges();
+            await DbSet.SaveChangesAsync();
             return Ok(new ReadingUserViewModel(user));
         }
         /// <summary>

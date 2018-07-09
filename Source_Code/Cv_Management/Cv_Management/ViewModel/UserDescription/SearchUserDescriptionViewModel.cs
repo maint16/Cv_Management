@@ -5,7 +5,7 @@ using System.Web;
 
 namespace Cv_Management.ViewModel.UserDescription
 {
-    public class SearchUserDescriptionViewModel
+    public class SearchUserDescriptionViewModel:BaseSearchViewModel
     {
         public HashSet<int> Ids { get; set; }
         public int UserId { get; set; }
