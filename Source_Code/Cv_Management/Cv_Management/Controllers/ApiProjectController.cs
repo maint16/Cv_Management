@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
-using Cv_Management.Entities;
-using Cv_Management.Entities.Context;
-using Cv_Management.ViewModel;
-using Cv_Management.ViewModel.Project;
+using CvManagementClientShare.ViewModels;
+using CvManagementClientShare.ViewModels.Project;
+using CvManagementModel.Models;
+using CvManagementModel.Models.Context;
 
-namespace Cv_Management.Controllers
+namespace CvManagement.Controllers
 {
     [RoutePrefix("api/projet")]
     public class ApiProjectController : ApiController
     {
-
         #region Properties
 
-        public readonly DbCvManagementContext DbSet;
+        public readonly CvManagementDbContext DbSet;
 
         #endregion
 
@@ -26,22 +23,21 @@ namespace Cv_Management.Controllers
 
         public ApiProjectController()
         {
-            DbSet = new DbCvManagementContext();
+            DbSet = new CvManagementDbContext();
         }
 
         #endregion
 
         #region Project
 
-
         /// <summary>
-        /// Get projects using specific conditions
+        ///     Get projects using specific conditions
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody]SearchProjectViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody] SearchProjectViewModel model)
         {
             model = model ?? new SearchProjectViewModel();
             var projects = DbSet.Projects.AsQueryable();
@@ -50,8 +46,8 @@ namespace Cv_Management.Controllers
                 var ids = model.Ids.Where(x => x > 0).ToList();
                 if (ids.Count > 0)
                     projects = projects.Where(x => ids.Contains(x.Id));
-
             }
+
             if (!string.IsNullOrEmpty(model.Name))
                 projects = projects.Where(c => c.Name.Contains(model.Name));
             var result = new SearchResultViewModel<IList<Project>>();
@@ -64,25 +60,26 @@ namespace Cv_Management.Controllers
                 projects = projects.Skip((pagination.Page - 1) * pagination.Records)
                     .Take(pagination.Records);
             }
+
             result.Records = await projects.ToListAsync();
             return Ok(result);
-
         }
 
         /// <summary>
-        /// Create Project
+        ///     Create Project
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody]CreateProjectViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody] CreateProjectViewModel model)
         {
             if (model == null)
             {
                 model = new CreateProjectViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var project = new Project();
@@ -90,28 +87,28 @@ namespace Cv_Management.Controllers
             project.Name = model.Name;
             project.Description = model.Description;
             project.FinishedTime = model.FinishedTime;
-            project.StatedTime = model.StatedTime;
+           
             project = DbSet.Projects.Add(project);
-           await DbSet.SaveChangesAsync();
+            await DbSet.SaveChangesAsync();
             return Ok(project);
-
         }
 
         /// <summary>
-        /// Update Project
+        ///     Update Project
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateProjectViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateProjectViewModel model)
         {
             if (model == null)
             {
                 model = new UpdateProjectViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             //get Project
@@ -122,20 +119,19 @@ namespace Cv_Management.Controllers
             project.Name = model.Name;
             project.Description = model.Description;
             project.FinishedTime = model.FinishedTime;
-            project.StatedTime = model.StatedTime;
-           await  DbSet.SaveChangesAsync();
+          
+            await DbSet.SaveChangesAsync();
             return Ok(project);
-
         }
 
         /// <summary>
-        /// Delete project using Id
+        ///     Delete project using Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri] int id)
         {
             var project = DbSet.Projects.Find(id);
             if (project == null)
@@ -143,10 +139,8 @@ namespace Cv_Management.Controllers
             DbSet.Projects.Remove(project);
             await DbSet.SaveChangesAsync();
             return Ok();
-
         }
 
         #endregion
-
     }
 }

@@ -3,22 +3,20 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
-using Cv_Management.Entities;
-using Cv_Management.Entities.Context;
-using Cv_Management.ViewModel;
-using Cv_Management.ViewModel.Responsibility;
+using CvManagementClientShare.ViewModels;
+using CvManagementClientShare.ViewModels.Responsibility;
+using CvManagementModel.Models;
+using CvManagementModel.Models.Context;
 
-namespace Cv_Management.Controllers
+namespace CvManagement.Controllers
 {
     [RoutePrefix("api/responsibility")]
     public class ApiResponsibilityController : ApiController
     {
-
         #region Properties 
 
-        public readonly DbCvManagementContext DbSet;
+        public readonly CvManagementDbContext DbSet;
 
         #endregion
 
@@ -26,7 +24,7 @@ namespace Cv_Management.Controllers
 
         public ApiResponsibilityController()
         {
-            DbSet = new DbCvManagementContext();
+            DbSet = new CvManagementDbContext();
         }
 
         #endregion
@@ -34,13 +32,13 @@ namespace Cv_Management.Controllers
         #region Methods
 
         /// <summary>
-        /// Get Responsibilities using specific conditions
+        ///     Get Responsibilities using specific conditions
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody]SearchResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody] SearchResponsibilityViewModel model)
         {
             model = model ?? new SearchResponsibilityViewModel();
             var responsibilities = DbSet.Responsibilities.AsQueryable();
@@ -49,8 +47,8 @@ namespace Cv_Management.Controllers
                 var ids = model.Ids.Where(x => x > 0).ToList();
                 if (ids.Count > 0)
                     responsibilities = responsibilities.Where(x => ids.Contains(x.Id));
-
             }
+
             if (!string.IsNullOrEmpty(model.Name))
                 responsibilities = responsibilities.Where(c => c.Name.Contains(model.Name));
             var result = new SearchResultViewModel<IList<Responsibility>>();
@@ -63,51 +61,52 @@ namespace Cv_Management.Controllers
                 responsibilities = responsibilities.Skip((pagination.Page - 1) * pagination.Records)
                     .Take(pagination.Records);
             }
+
             result.Records = await responsibilities.ToListAsync();
             return Ok(result);
-
         }
 
         /// <summary>
-        /// Create responsibility
+        ///     Create responsibility
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody]CreateResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody] CreateResponsibilityViewModel model)
         {
             if (model == null)
             {
                 model = new CreateResponsibilityViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var responsibility = new Responsibility();
             responsibility.Name = model.Name;
             responsibility.CreatedTime = DateTime.Now.ToOADate();
             responsibility = DbSet.Responsibilities.Add(responsibility);
-           await  DbSet.SaveChangesAsync();
+            await DbSet.SaveChangesAsync();
             return Ok(responsibility);
-
         }
 
         /// <summary>
-        /// Update responsibility
+        ///     Update responsibility
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateResponsibilityViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateResponsibilityViewModel model)
         {
             if (model == null)
             {
                 model = new UpdateResponsibilityViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             //get Responsibility
@@ -116,19 +115,18 @@ namespace Cv_Management.Controllers
                 return NotFound();
             responsibility.Name = model.Name;
             responsibility.LastModifiedTime = DateTime.Now.ToOADate();
-          await  DbSet.SaveChangesAsync();
+            await DbSet.SaveChangesAsync();
             return Ok(responsibility);
-
         }
 
         /// <summary>
-        /// Delete responsibility
+        ///     Delete responsibility
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri] int id)
         {
             var responsibility = DbSet.Responsibilities.Find(id);
             if (responsibility == null)
@@ -136,10 +134,8 @@ namespace Cv_Management.Controllers
             DbSet.Responsibilities.Remove(responsibility);
             await DbSet.SaveChangesAsync();
             return Ok();
-
         }
 
         #endregion
-
     }
 }

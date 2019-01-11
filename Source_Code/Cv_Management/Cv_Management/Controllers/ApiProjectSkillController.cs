@@ -1,25 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
-using Cv_Management.Entities;
-using Cv_Management.Entities.Context;
-using Cv_Management.ViewModel;
-using Cv_Management.ViewModel.Project;
-using Cv_Management.ViewModel.ProjectSkill;
-using Cv_Management.ViewModel.Skill;
+using CvManagementClientShare.ViewModels;
+using CvManagementClientShare.ViewModels.ProjectSkill;
+using CvManagementModel.Models;
+using CvManagementModel.Models.Context;
 
-namespace Cv_Management.Controllers
+namespace CvManagement.Controllers
 {
     [RoutePrefix("api/projectSkill")]
     public class ApiProjectSkillController : ApiController
     {
         #region Properties
 
-        public readonly DbCvManagementContext DbSet;
+        public readonly CvManagementDbContext DbSet;
 
         #endregion
 
@@ -27,7 +23,7 @@ namespace Cv_Management.Controllers
 
         public ApiProjectSkillController()
         {
-            DbSet = new DbCvManagementContext();
+            DbSet = new CvManagementDbContext();
         }
 
         #endregion
@@ -35,13 +31,13 @@ namespace Cv_Management.Controllers
         #region Mothods
 
         /// <summary>
-        /// get projects skill using specific conditions
+        ///     get projects skill using specific conditions
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody]SearchProjectSkillViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody] SearchProjectSkillViewModel model)
         {
             model = model ?? new SearchProjectSkillViewModel();
             var projectSkills = DbSet.ProjectSkills.AsQueryable();
@@ -50,15 +46,15 @@ namespace Cv_Management.Controllers
                 var projectIds = model.ProjectIds.Where(x => x > 0).ToList();
                 if (projectIds.Count > 0)
                     projectSkills = projectSkills.Where(x => projectIds.Contains(x.ProjectId));
-
             }
+
             if (model.SkillIds != null)
             {
                 var skillIds = model.SkillIds.Where(x => x > 0).ToList();
                 if (skillIds.Count > 0)
                     projectSkills = projectSkills.Where(x => skillIds.Contains(x.SkillId));
-
             }
+
             var result = new SearchResultViewModel<IList<ProjectSkill>>();
             result.Total = await projectSkills.CountAsync();
             var pagination = model.Pagination;
@@ -69,38 +65,38 @@ namespace Cv_Management.Controllers
                 projectSkills = projectSkills.Skip((pagination.Page - 1) * pagination.Records)
                     .Take(pagination.Records);
             }
+
             result.Records = await projectSkills.ToListAsync();
             return Ok(result);
-
         }
 
         /// <summary>
-        /// Create project skill
+        ///     Create project skill
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody]CreateProjectSkillViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody] CreateProjectSkillViewModel model)
         {
             if (model == null)
             {
                 model = new CreateProjectSkillViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var projectSkill = new ProjectSkill();
             projectSkill.ProjectId = model.ProjectId;
             projectSkill.SkillId = model.SkillId;
             projectSkill = DbSet.ProjectSkills.Add(projectSkill);
-           await  DbSet.SaveChangesAsync();
+            await DbSet.SaveChangesAsync();
             return Ok(projectSkill);
-
         }
 
         /// <summary>
-        /// Delete Project skill
+        ///     Delete Project skill
         /// </summary>
         /// <param name="skillId"></param>
         /// <param name="projectId"></param>
@@ -109,17 +105,16 @@ namespace Cv_Management.Controllers
         [Route("")]
         public async Task<IHttpActionResult> Delete([FromUri] int skillId, [FromUri] int projectId)
         {
-            var projectSkill = DbSet.ProjectSkills.FirstOrDefault(c => c.SkillId == skillId && c.ProjectId == projectId);
+            var projectSkill =
+                DbSet.ProjectSkills.FirstOrDefault(c => c.SkillId == skillId && c.ProjectId == projectId);
 
             if (projectSkill == null)
                 return NotFound();
             DbSet.ProjectSkills.Remove(projectSkill);
             await DbSet.SaveChangesAsync();
             return Ok();
-
         }
 
         #endregion
-
     }
 }

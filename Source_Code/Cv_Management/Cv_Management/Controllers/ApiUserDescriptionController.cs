@@ -1,43 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
-using Cv_Management.Entities;
-using Cv_Management.Entities.Context;
-using Cv_Management.ViewModel;
-using Cv_Management.ViewModel.User;
-using Cv_Management.ViewModel.UserDescription;
+using CvManagementClientShare.ViewModels;
+using CvManagementClientShare.ViewModels.UserDescription;
+using CvManagementModel.Models;
+using CvManagementModel.Models.Context;
 
-namespace Cv_Management.Controllers
+namespace CvManagement.Controllers
 {
     [RoutePrefix("api/userDescription")]
     public class ApiUserDescriptionController : ApiController
     {
         #region Properties
-        public readonly DbCvManagementContext DbSet;
+
+        public readonly CvManagementDbContext DbSet;
+
         #endregion
 
         #region Contructors
 
         public ApiUserDescriptionController()
         {
-            DbSet = new DbCvManagementContext();
+            DbSet = new CvManagementDbContext();
         }
 
         #endregion
 
         #region  Methods
+
         /// <summary>
-        /// Get user description using specific conditions 
+        ///     Get user description using specific conditions
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody]SearchUserDescriptionViewModel model)
+        public async Task<IHttpActionResult> Search([FromBody] SearchUserDescriptionViewModel model)
         {
             model = model ?? new SearchUserDescriptionViewModel();
             var userDescriptions = DbSet.UserDescriptions.AsQueryable();
@@ -46,8 +46,8 @@ namespace Cv_Management.Controllers
                 var ids = model.Ids.Where(x => x > 0).ToList();
                 if (ids.Count > 0)
                     userDescriptions = userDescriptions.Where(x => ids.Contains(x.Id));
-
             }
+
             if (model.UserId > 0)
                 userDescriptions = userDescriptions.Where(c => c.UserId == model.UserId);
             if (!string.IsNullOrEmpty(model.Description))
@@ -62,24 +62,26 @@ namespace Cv_Management.Controllers
                 userDescriptions = userDescriptions.Skip((pagination.Page - 1) * pagination.Records)
                     .Take(pagination.Records);
             }
+
             results.Records = await userDescriptions.ToListAsync();
             return Ok(results);
-
         }
+
         /// <summary>
-        /// Create User description
+        ///     Create User description
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async  Task<IHttpActionResult> Create([FromBody]CreateUserDescriptionViewModel model)
+        public async Task<IHttpActionResult> Create([FromBody] CreateUserDescriptionViewModel model)
         {
             if (model == null)
             {
                 model = new CreateUserDescriptionViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var userDescription = new UserDescription();
@@ -88,23 +90,24 @@ namespace Cv_Management.Controllers
             userDescription = DbSet.UserDescriptions.Add(userDescription);
             await DbSet.SaveChangesAsync();
             return Ok(userDescription);
-
         }
+
         /// <summary>
-        /// Update User description 
+        ///     Update User description
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody]UpdateUserDescriptionViewModel model)
+        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateUserDescriptionViewModel model)
         {
             if (model == null)
             {
                 model = new UpdateUserDescriptionViewModel();
                 Validate(model);
             }
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             //get UserDescription
@@ -115,24 +118,23 @@ namespace Cv_Management.Controllers
             userDescription.Description = model.Description;
             await DbSet.SaveChangesAsync();
             return Ok(userDescription);
-
         }
+
         /// <summary>
-        /// Delete User Desciption from Id
+        ///     Delete User Desciption from Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Delete([FromUri]int id)
+        public async Task<IHttpActionResult> Delete([FromUri] int id)
         {
             var userDescription = DbSet.UserDescriptions.Find(id);
             if (userDescription == null)
                 return NotFound();
             DbSet.UserDescriptions.Remove(userDescription);
-           await DbSet.SaveChangesAsync();
+            await DbSet.SaveChangesAsync();
             return Ok();
-
         }
 
         #endregion

@@ -1,9 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cv_Management", "Cv_Management\Cv_Management.csproj", "{6EFDCEFE-42FF-4F98-BF3E-BF9CAD58A2CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvManagement", "Cv_Management\CvManagement.csproj", "{6EFDCEFE-42FF-4F98-BF3E-BF9CAD58A2CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvManagement.Test", "CvManagement.Test\CvManagement.Test.csproj", "{E704B0B2-4885-4241-8CB3-D99AE0BC826F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvManagementBusiness", "CvManagementBusiness\CvManagementBusiness.csproj", "{4C8FEB1D-7C3E-417F-9329-71BCBC6F3EC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvManagementModel", "CvManagementModel\CvManagementModel.csproj", "{F60D0ADE-D193-48DE-9443-5C828B97B568}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CvManagementClientShare", "CvManagementClientShare\CvManagementClientShare.csproj", "{A6D8FDE9-EDBC-471E-8112-02B7014A2D6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +23,27 @@ Global
 		{6EFDCEFE-42FF-4F98-BF3E-BF9CAD58A2CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6EFDCEFE-42FF-4F98-BF3E-BF9CAD58A2CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6EFDCEFE-42FF-4F98-BF3E-BF9CAD58A2CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E704B0B2-4885-4241-8CB3-D99AE0BC826F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E704B0B2-4885-4241-8CB3-D99AE0BC826F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E704B0B2-4885-4241-8CB3-D99AE0BC826F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E704B0B2-4885-4241-8CB3-D99AE0BC826F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C8FEB1D-7C3E-417F-9329-71BCBC6F3EC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C8FEB1D-7C3E-417F-9329-71BCBC6F3EC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C8FEB1D-7C3E-417F-9329-71BCBC6F3EC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C8FEB1D-7C3E-417F-9329-71BCBC6F3EC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F60D0ADE-D193-48DE-9443-5C828B97B568}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F60D0ADE-D193-48DE-9443-5C828B97B568}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F60D0ADE-D193-48DE-9443-5C828B97B568}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F60D0ADE-D193-48DE-9443-5C828B97B568}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6D8FDE9-EDBC-471E-8112-02B7014A2D6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D8FDE9-EDBC-471E-8112-02B7014A2D6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D8FDE9-EDBC-471E-8112-02B7014A2D6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D8FDE9-EDBC-471E-8112-02B7014A2D6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8C744A68-D6C5-46A1-98CB-763F2C8844D6}
 	EndGlobalSection
 EndGlobal

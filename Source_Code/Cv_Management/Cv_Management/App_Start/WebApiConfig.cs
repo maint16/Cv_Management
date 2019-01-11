@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web.Http;
+﻿using System.Web.Http;
 using ApiMultiPartFormData;
 
-namespace Cv_Management
+namespace CvManagement
 {
     public static class WebApiConfig
     {
@@ -16,9 +13,9 @@ namespace Cv_Management
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(
-                name: "DefaultApi",
-                routeTemplate: "api/{controller}/{id}",
-                defaults: new { id = RouteParameter.Optional }
+                "DefaultApi",
+                "api/{controller}/{id}",
+                new {id = RouteParameter.Optional}
             );
             config.Formatters.Add(new MultipartFormDataFormatter());
         }
