@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using System.Web.Http;
+using CvManagementBusiness.Interfaces.Domains;
 using CvManagementClientShare.ViewModels.ProjectResponsibility;
-using CvManagementModel.Models.Context;
 
 namespace CvManagement.Controllers
 {
@@ -10,15 +10,15 @@ namespace CvManagement.Controllers
     {
         #region properties
 
-        public readonly CvManagementDbContext DbSet;
+        private readonly IProjectResponsibilityDomain _projectResponsibilityDomain;
 
         #endregion
 
         #region Contructors
 
-        public ApiProjectResponsibilityController()
+        public ApiProjectResponsibilityController(IProjectResponsibilityDomain projectResponsibilityDomain)
         {
-            DbSet = new CvManagementDbContext();
+            _projectResponsibilityDomain = projectResponsibilityDomain;
         }
 
         #endregion
@@ -32,40 +32,15 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody] SearchProjectResponsibilityViewModel model)
+        public async Task<IHttpActionResult> SearchProjectResponsibilities(
+            [FromBody] SearchProjectResponsibilityViewModel model)
         {
-            return Ok();
-        }
+            model = model ?? new SearchProjectResponsibilityViewModel();
+            Validate(model);
 
-        /// <summary>
-        ///     Create project responsibility
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody] CreateProjectResponsibilityViewModel model)
-        {
-            if (model == null)
-            {
-                model = new CreateProjectResponsibilityViewModel();
-                Validate(model);
-            }
+            var projectResponsibilities = await _projectResponsibilityDomain.SearchProjectResponsibilityAsync(model);
 
-            return Ok();
-        }
-
-        /// <summary>
-        ///     Delete project responsibility
-        /// </summary>
-        /// <param name="responsibilityId"></param>
-        /// <param name="projectId"></param>
-        /// <returns></returns>
-        [HttpDelete]
-        [Route("")]
-        public async Task<IHttpActionResult> Delete([FromUri] int responsibilityId, [FromUri] int projectId)
-        {
-            return Ok();
+            return Ok(projectResponsibilities);
         }
 
         #endregion

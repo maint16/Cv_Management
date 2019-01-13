@@ -1,12 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Web.Http;
-using CvManagementClientShare.ViewModels;
+using CvManagementBusiness.Interfaces.Domains;
 using CvManagementClientShare.ViewModels.ProjectSkill;
-using CvManagementModel.Models;
-using CvManagementModel.Models.Context;
 
 namespace CvManagement.Controllers
 {
@@ -15,15 +10,15 @@ namespace CvManagement.Controllers
     {
         #region Properties
 
-        public readonly CvManagementDbContext DbSet;
+        private readonly IProjectSkillDomain _projectSkillDomain;
 
         #endregion
 
         #region Contructors
 
-        public ApiProjectSkillController()
+        public ApiProjectSkillController(IProjectSkillDomain projectSkillDomain)
         {
-            DbSet = new CvManagementDbContext();
+            _projectSkillDomain = projectSkillDomain;
         }
 
         #endregion
@@ -37,82 +32,14 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody] SearchProjectSkillViewModel model)
+        public async Task<IHttpActionResult> SearchProjectSkills([FromBody] SearchProjectSkillViewModel model)
         {
             model = model ?? new SearchProjectSkillViewModel();
-            var projectSkills = DbSet.ProjectSkills.AsQueryable();
-            if (model.ProjectIds != null)
-            {
-                var projectIds = model.ProjectIds.Where(x => x > 0).ToList();
-                if (projectIds.Count > 0)
-                    projectSkills = projectSkills.Where(x => projectIds.Contains(x.ProjectId));
-            }
+            Validate(model);
 
-            if (model.SkillIds != null)
-            {
-                var skillIds = model.SkillIds.Where(x => x > 0).ToList();
-                if (skillIds.Count > 0)
-                    projectSkills = projectSkills.Where(x => skillIds.Contains(x.SkillId));
-            }
+            var projectSkills = await _projectSkillDomain.SearchProjectSkillsAsync(model);
 
-            var result = new SearchResultViewModel<IList<ProjectSkill>>();
-            result.Total = await projectSkills.CountAsync();
-            var pagination = model.Pagination;
-            if (pagination != null)
-            {
-                if (pagination.Page < 1)
-                    pagination.Page = 1;
-                projectSkills = projectSkills.Skip((pagination.Page - 1) * pagination.Records)
-                    .Take(pagination.Records);
-            }
-
-            result.Records = await projectSkills.ToListAsync();
-            return Ok(result);
-        }
-
-        /// <summary>
-        ///     Create project skill
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody] CreateProjectSkillViewModel model)
-        {
-            if (model == null)
-            {
-                model = new CreateProjectSkillViewModel();
-                Validate(model);
-            }
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            var projectSkill = new ProjectSkill();
-            projectSkill.ProjectId = model.ProjectId;
-            projectSkill.SkillId = model.SkillId;
-            projectSkill = DbSet.ProjectSkills.Add(projectSkill);
-            await DbSet.SaveChangesAsync();
-            return Ok(projectSkill);
-        }
-
-        /// <summary>
-        ///     Delete Project skill
-        /// </summary>
-        /// <param name="skillId"></param>
-        /// <param name="projectId"></param>
-        /// <returns></returns>
-        [HttpDelete]
-        [Route("")]
-        public async Task<IHttpActionResult> Delete([FromUri] int skillId, [FromUri] int projectId)
-        {
-            var projectSkill =
-                DbSet.ProjectSkills.FirstOrDefault(c => c.SkillId == skillId && c.ProjectId == projectId);
-
-            if (projectSkill == null)
-                return NotFound();
-            DbSet.ProjectSkills.Remove(projectSkill);
-            await DbSet.SaveChangesAsync();
-            return Ok();
+            return Ok(projectSkills);
         }
 
         #endregion

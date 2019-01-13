@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Web.Http;
-using CvManagementClientShare.ViewModels;
+using CvManagementBusiness.Interfaces.Domains;
 using CvManagementClientShare.ViewModels.Skill;
-using CvManagementModel.Models;
-using CvManagementModel.Models.Context;
 
 namespace CvManagement.Controllers
 {
@@ -16,15 +10,15 @@ namespace CvManagement.Controllers
     {
         #region Properties
 
-        public readonly CvManagementDbContext DbSet;
+        private readonly ISkillDomain _skillDomain;
 
         #endregion
 
         #region Contructors
 
-        public ApiSkillController()
+        public ApiSkillController(ISkillDomain skillDomain)
         {
-            DbSet = new CvManagementDbContext();
+            _skillDomain = skillDomain;
         }
 
         #endregion
@@ -38,33 +32,13 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody] SearchSkillViewModel model)
+        public async Task<IHttpActionResult> SearchSkill([FromBody] SearchSkillViewModel condition)
         {
-            model = model ?? new SearchSkillViewModel();
-            var skills = DbSet.Skills.AsQueryable();
-            if (model.Ids != null)
-            {
-                var ids = model.Ids.Where(x => x > 0).ToList();
-                if (ids.Count > 0)
-                    skills = skills.Where(x => ids.Contains(x.Id));
-            }
+            condition = condition ?? new SearchSkillViewModel();
+            Validate(condition);
 
-            if (!string.IsNullOrEmpty(model.Name))
-                skills = skills.Where(c => c.Name.Contains(model.Name));
-
-            var result = new SearchResultViewModel<IList<Skill>>();
-            result.Total = await skills.CountAsync();
-            var pagination = model.Pagination;
-            if (pagination != null)
-            {
-                if (pagination.Page < 1)
-                    pagination.Page = 1;
-                skills = skills.Skip((pagination.Page - 1) * pagination.Records)
-                    .Take(pagination.Records);
-            }
-
-            result.Records = await skills.ToListAsync();
-            return Ok(result);
+            var skills = await _skillDomain.SearchSkillsAsync(condition);
+            return Ok();
         }
 
         /// <summary>
@@ -74,21 +48,19 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody] CreateSkillViewModel model)
+        public async Task<IHttpActionResult> AddSkill([FromBody] AddSkillViewModel model)
         {
             if (model == null)
             {
-                model = new CreateSkillViewModel();
+                model = new AddSkillViewModel();
                 Validate(model);
             }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var skill = new Skill();
-            skill.Name = model.Name;
-            skill.CreatedTime = DateTime.Now.ToOADate();
-            skill = DbSet.Skills.Add(skill);
-            await DbSet.SaveChangesAsync();
+
+            var skill = await _skillDomain.AddSkillAsync(model);
+
             return Ok(skill);
         }
 
@@ -100,23 +72,19 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateSkillViewModel model)
+        public async Task<IHttpActionResult> EditSkill([FromUri] int id, [FromBody] EditSkillViewModel model)
         {
             if (model == null)
             {
-                model = new UpdateSkillViewModel();
+                model = new EditSkillViewModel();
                 Validate(model);
             }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            //get skill
-            var skill = DbSet.Skills.Find(id);
-            if (skill == null)
-                return NotFound();
-            skill.Name = model.Name;
-            skill.LastModifiedTime = DateTime.Now.ToOADate();
-            await DbSet.SaveChangesAsync();
+
+            var skill = await _skillDomain.EditSkillAsync(model);
+
             return Ok(skill);
         }
 
@@ -129,12 +97,9 @@ namespace CvManagement.Controllers
         [Route("{id}")]
         public async Task<IHttpActionResult> Delete([FromUri] int id)
         {
-            var skill = DbSet.Skills.Find(id);
-            if (skill == null)
-                return NotFound();
-            DbSet.Skills.Remove(skill);
-            await DbSet.SaveChangesAsync();
-            return Ok();
+            var result = await _skillDomain.DeleteSkillAsync(id);
+
+            return Ok(result);
         }
 
         #endregion

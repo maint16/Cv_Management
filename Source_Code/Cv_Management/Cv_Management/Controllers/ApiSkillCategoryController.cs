@@ -32,7 +32,7 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("")]
-        public async Task<IHttpActionResult> Search([FromBody] SearchSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> SearchSkillCategory([FromBody] SearchSkillCategoryViewModel model)
         {
             if (model == null)
             {
@@ -40,8 +40,9 @@ namespace CvManagement.Controllers
                 Validate(model);
             }
 
-            var loadSkillCategoriesResult = await _skillSkilCategoryDomain.SearchSkillCategoriesAsync(model);
-            return Ok(loadSkillCategoriesResult);
+            var skillCategories = await _skillSkilCategoryDomain.SearchSkillCategoriesAsync(model);
+
+            return Ok(skillCategories);
         }
 
         /// <summary>
@@ -51,11 +52,11 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("")]
-        public async Task<IHttpActionResult> Create([FromBody] CreateSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> AddSkillCategory([FromBody] AddSkillCategoryViewModel model)
         {
             if (model == null)
             {
-                model = new CreateSkillCategoryViewModel();
+                model = new AddSkillCategoryViewModel();
                 Validate(model);
             }
 
@@ -75,22 +76,19 @@ namespace CvManagement.Controllers
         /// <returns></returns>
         [HttpPut]
         [Route("{id}")]
-        public async Task<IHttpActionResult> Update([FromUri] int id, [FromBody] UpdateSkillCategoryViewModel model)
+        public async Task<IHttpActionResult> EditSkillCategory([FromUri] int id,
+            [FromBody] EditSkillCategoryViewModel model)
         {
             if (model == null)
             {
-                model = new UpdateSkillCategoryViewModel();
+                model = new EditSkillCategoryViewModel();
                 Validate(model);
             }
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            model.Id = id;
             var skillCategory = await _skillSkilCategoryDomain.EditCategoryAsync(model);
-
-            if (skillCategory == null)
-                return NotFound();
 
             return Ok(skillCategory);
         }
